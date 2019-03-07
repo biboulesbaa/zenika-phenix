@@ -6,22 +6,23 @@
         <Property name="rollingFileName">logs</Property>
     </Properties>
     <Appenders>
-        <RollingFile immediateFlush="false" name="rollingFile" fileName="${logPath}/${rollingFileName}.log" filePattern="${logPath}/${rollingFileName}_%d{yyyy-MM-dd}.log">
+        <RollingFile name="rollingFile" fileName="${logPath}/${rollingFileName}.log" filePattern="${logPath}/${rollingFileName}_%d{yyyy-MM-dd}.log">
             <PatternLayout pattern="[%highlight{%-5level}] %d{DEFAULT} %c{1}.%M() - %msg%n%throwable{short.lineNumber}" />
             <Policies>
 
                 <!-- Causes a rollover once the date/time pattern no longer applies to the active file -->
                 <TimeBasedTriggeringPolicy interval="1" modulate="true" />
-                <SizeBasedTriggeringPolicy size="250 MB"/>
             </Policies>
         </RollingFile>
 
-
+        <Async name="Async">
+            <AppenderRef ref="rollingFile"/>
+        </Async>
     </Appenders>
 
     <Loggers>
         <Root level="debug" additivity="false">
-            <AppenderRef ref="rollingFile" />
+            <AppenderRef ref="Async" />
         </Root>
     </Loggers>
 </Configuration>
