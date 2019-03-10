@@ -17,6 +17,7 @@ public class ConfigTest extends InitialisationAndCleanningData {
         properties.put("date","20170513" );
         properties.put("dataSource", "testDir/dataCom/");
         properties.put("topN","3");
+        properties.put("productNum","10");
         properties.put("listMagazinFileID","testDir/dataCom/listMagazinId.data");
         properties.put("working_dir", "testDir/workingDir/");
 

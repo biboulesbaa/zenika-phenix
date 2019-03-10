@@ -34,7 +34,8 @@ public class ServiceScheduler {
 
         StoreRepository repository = new FileStoreRepository(initConfig.listMagazinFileID);
         ProductSalesVolumeCalculator calculator = new ProductSalesVolumeCalculator(initConfig, repository);
-        calculator.computeSalesVolumeForAllProductsPerStores(2);
+        int t = calculator.computeSalesVolumeForAllProductsPerStores(2);
+        System.out.println(t);
         logger.info("End calulating CA and Ventes of each product By magazin");
 
         ComputeMetrics computeMetrics = new ComputeMetrics(initConfig,repository);

@@ -10,6 +10,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -63,7 +65,8 @@ public class ProductSalesVolumeCalculatorTest extends InitialisationAndCleanning
         Assert.assertTrue("No line 1|16|32.00", line1.contains("1|16|32.00"));
         Assert.assertTrue("No line 3|6|9.00" , line1.contains("3|6|9.00"));
 
-
     }
+
+
 
 }

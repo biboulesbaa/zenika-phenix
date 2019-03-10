@@ -53,6 +53,7 @@ public class InitialisationAndCleanningData {
             bufferedWriter.write("date=20170513\n" );
             bufferedWriter.write("dataSource=testDir/dataCom/\n");
             bufferedWriter.write("topN=3\n");
+            bufferedWriter.write("productNum=10\n");
             bufferedWriter.write("listMagazinFileID=testDir/dataCom/listMagazinId.data\n");
             bufferedWriter.write("working_dir=testDir/workingDir/\n");
 

@@ -6,23 +6,38 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Locale;
+import java.util.*;
 
 
 public class GenerationRandomData {
     private static final Logger logger = LogManager.getLogger(GenerationRandomData.class.getName());
     public static void main(String [] args) throws IOException {
-        String date = "20170514";
 
-        String [] listDate = {"20170506","20170507","20170508","20170509","20170510", "20170511","20170512", "20170513"} ;
-        Arrays.stream(listDate).forEach(mydate -> {
-            generateTransaction(mydate);
-            generateMagazinPriceRef(mydate);
-        });
-        generateMagazinPriceRef(date);
-        generateTransaction(date);
+        File f =new File("myfile.data") ;
+        RandomAccessFile ra = new RandomAccessFile(f, "rw") ;
+
+        //ra.seek(5);
+        ra.writeUTF("123|3\n");
+        ra.writeUTF("23|4\n");
+        ra.close();
+
+        RandomAccessFile reader = new RandomAccessFile(f, "r") ;
+
+        reader.seek(10);
+        String s = reader.readLine();
+        System.out.println(s);
+        reader.close();
+
+
+//        String date = "20170514";
+//
+//        String [] listDate = {"20170506","20170507","20170508","20170509","20170510", "20170511","20170512", "20170513"} ;
+//        Arrays.stream(listDate).forEach(mydate -> {
+//            generateTransaction(mydate);
+//            generateMagazinPriceRef(mydate);
+//        });
+//        generateMagazinPriceRef(date);
+//        generateTransaction(date);
 
 
     }

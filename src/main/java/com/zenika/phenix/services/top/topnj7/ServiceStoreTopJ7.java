@@ -1,36 +1,34 @@
 package com.zenika.phenix.services.top.topnj7;
 
 import com.zenika.phenix.configuration.InitConfig;
+import com.zenika.phenix.repositories.StoreRepository;
 import com.zenika.phenix.services.top.AbstractServiceTop;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class ServiceStoreTopJ7 extends AbstractServiceTop {
-    public InitConfig initConfig ;
-
     private static final Logger logger = LogManager.getLogger(ServiceStoreTopJ7.class.getName());
-    public ServiceStoreTopJ7(InitConfig initConfig){
+    private final StoreRepository storeRepository ;
+    private InitConfig initConfig ;
+
+    public ServiceStoreTopJ7(InitConfig initConfig, StoreRepository storeRepository){
         this.initConfig = initConfig ;
+        this.storeRepository = storeRepository ;
     }
 
     public void calculateMagsinTopNJM() throws IOException {
         String date = initConfig.date ;
         String[] listDateJN = calculateListeDate(date) ;
 
-        String listMagazinFileID = initConfig.dataSource +"/listMagazinId.data";
-        BufferedReader br = new BufferedReader(new FileReader(listMagazinFileID)) ;
-
-        if (validateTmpDataOfJ7ByMagazin(listDateJN, br) ){
-            startParalleleCalcul(listDateJN , listMagazinFileID) ;
+        if (validateTmpDataOfJ7ByMagazin(listDateJN) ){
+            startParalleleCalcul(listDateJN ) ;
 
 
         }else logger.info("No validate data for ColculateTopNJ-7");
@@ -38,12 +36,13 @@ public class ServiceStoreTopJ7 extends AbstractServiceTop {
 
     }
 
-    private void startParalleleCalcul(String[] listDateJN, String listMagazinFileID) throws FileNotFoundException {
-        BufferedReader br2 = new BufferedReader(new FileReader(listMagazinFileID)) ;
-        List<String> collect = br2.lines().collect(Collectors.toList());
+    private void startParalleleCalcul(String[] listDateJN)  {
+        logger.info("In parallele calcul ");
+        List<String> collect = new ArrayList<>(storeRepository.getAllStoreIds());
         List<String> list1 = collect.subList(0, collect.size()/2 ) ;
         List<String> list2 = collect.subList( collect.size()/2 , collect.size() ) ;
 
+        logger.info("In parallele calcul : splited list of magazin to two sublist ");
 
         ExecutorService executorService = Executors.newFixedThreadPool(2);
         Runnable runnable1 = () -> {
@@ -59,22 +58,22 @@ public class ServiceStoreTopJ7 extends AbstractServiceTop {
         executorService.shutdown();
 
         try {
-            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+            executorService.awaitTermination(240, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    private void calculate(String[] listDateJN, List<String> listMagazinId)  {
+    private void calculate(String[] listDateJN, Collection<String> listStoresIds)  {
         logger.info("Found validate data for calculateMagsinTopNJ-7") ;
 
-        listMagazinId.stream().forEach(magasinid -> {
+        for (String storeId : listStoresIds){
             TreeMap<Integer, Double> treeMapProQte = new TreeMap<>() ;
             TreeMap<Integer, Double> treeMapProCA = new TreeMap<>() ;
 
-            Arrays.stream(listDateJN).forEach(mydate -> {
-                String fileNameMagazinVenteByDate = initConfig.datatmp3Dir +  mydate + "/" + magasinid + ".data" ;
-                String fileNameMagazinCAByDate = initConfig.datatmp4Dir + mydate + "/" + magasinid + ".data" ;
+            for (String mydate : listDateJN){
+                String fileNameMagazinVenteByDate = initConfig.datatmp3Dir +  mydate + "/" + storeId + ".data" ;
+                String fileNameMagazinCAByDate = initConfig.datatmp4Dir + mydate + "/" + storeId + ".data" ;
                 try {
                     BufferedReader bufferedReaderMagasinVente = new BufferedReader(new FileReader(fileNameMagazinVenteByDate)) ;
                     fillTreemapFromBufReader(treeMapProQte, bufferedReaderMagasinVente , 1 );
@@ -83,36 +82,39 @@ public class ServiceStoreTopJ7 extends AbstractServiceTop {
                     fillTreemapFromBufReader(treeMapProCA, bufferedReaderMagasinCA , 2);
 
                 } catch (FileNotFoundException e) {
-                    e.printStackTrace();
+                    logger.error(e.getMessage());
                 }
-            });
+            }
+
+            String fileName1 = initConfig.top100VentesMagasinJ7Dir +  "/" + initConfig.date +"/top_100_ventes_" + storeId + "_" + initConfig.date+ ".data" ;
+            String fileName2 = initConfig.top100CaMagasinJ7Dir + "/" + initConfig.date  +"/top_100_ca_" + storeId + "_" + initConfig.date+ ".data"  ;
 
             try {
-                String fileName1 = initConfig.top100VentesMagasinJ7Dir +  "/" + initConfig.date +"/top_100_ventes_" + magasinid + "_" + initConfig.date+ ".data" ;
-                String fileName2 = initConfig.top100CaMagasinJ7Dir + "/" + initConfig.date  +"/top_100_ca_" + magasinid + "_" + initConfig.date+ ".data"  ;
                 write(treeMapProQte, treeMapProCA, fileName1, fileName2, initConfig.topn);
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.error(e.getMessage() ) ;
             }
 
             treeMapProCA.clear();
             treeMapProQte.clear();
-        });
+        }
     }
 
 
-    private Boolean validateTmpDataOfJ7ByMagazin(String[] listDate , BufferedReader br ) {
-        List<Boolean> collect1 = br.lines().map(magasinid -> {
-            List<Boolean> collect = Arrays.stream(listDate).map(d -> {
-                String fileNameMagazinVenteByDate = initConfig.datatmp3Dir + d + "/" + magasinid + ".data";
-                String fileNameMagazinCAByDate = initConfig.datatmp4Dir + d + "/" + magasinid + ".data";
+    private Boolean validateTmpDataOfJ7ByMagazin(String[] listDate  ) {
 
-                File dir1 = new File(fileNameMagazinVenteByDate);
-                File dir2 = new File(fileNameMagazinCAByDate);
-                return dir1.exists() && dir2.exists();
-            }).collect(Collectors.toList());
-            return !collect.contains(false);
-        }).collect(Collectors.toList());
+        List<Boolean> collect1 = storeRepository.getAllStoreIds()
+                .stream().map(magasinid -> {
+                    List<Boolean> collect = Arrays.stream(listDate).map(d -> {
+                        String fileNameMagazinVenteByDate = initConfig.datatmp3Dir + d + "/" + magasinid + ".data";
+                        String fileNameMagazinCAByDate = initConfig.datatmp4Dir + d + "/" + magasinid + ".data";
+
+                        File dir1 = new File(fileNameMagazinVenteByDate);
+                        File dir2 = new File(fileNameMagazinCAByDate);
+                        return dir1.exists() && dir2.exists();
+                    }).collect(Collectors.toList());
+                    return !collect.contains(false);
+                }).collect(Collectors.toList());
 
         return !collect1.contains(false);
 

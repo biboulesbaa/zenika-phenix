@@ -18,6 +18,7 @@ public class InitConfig {
     private static final String DATE = "date";
     private static final String DATA_SOURCE = "dataSource";
     private static final String TOP_N = "topN";
+    private static final String PRODUCT_NUM = "productNum";
     private static final String LIST_MAGAZIN_FILE_ID = "listMagazinFileID";
     private static final String WORKING_DIR = "working_dir";
     private static final String OUTPUT_TOP_100_CA_MAGASIN_DIR = "output_top_100_ca_magasin_dir";
@@ -49,6 +50,7 @@ public class InitConfig {
     public final String top100VentesGlobalDir; //= "top_100_ventes_global/" ;
     public final String top100CaGlobalDir; //= "top_100_ca_global/" ;
     public final int topn; //= 100;
+    public final int productNum ; //= 100;
     public final String dataSource ;
     public final String date;
     public final String listMagazinFileID ;
@@ -63,6 +65,7 @@ public class InitConfig {
         this.date = props.getProperty(DATE);
         this.dataSource = props.getProperty(DATA_SOURCE);
         this.topn = Integer.parseInt( props.getProperty(TOP_N) ) ;
+        this.productNum = Integer.parseInt(props.getProperty(PRODUCT_NUM));
         this.listMagazinFileID = props.getProperty(LIST_MAGAZIN_FILE_ID) ;
 
         String workingDir = props.getProperty(WORKING_DIR);

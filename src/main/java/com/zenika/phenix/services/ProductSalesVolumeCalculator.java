@@ -33,7 +33,7 @@ public class ProductSalesVolumeCalculator {
         this.repository = repository;
     }
 
-    public void computeSalesVolumeForAllProductsPerStores(int parallelism) {
+    public int computeSalesVolumeForAllProductsPerStores(int parallelism) {
         Collection<List<String>> stores = partitionStoresFor(parallelism);
         ExecutorService executorService = Executors.newFixedThreadPool(parallelism);
 
@@ -47,31 +47,32 @@ public class ProductSalesVolumeCalculator {
         try {
             executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
         } catch (InterruptedException ignore) {
-
+            logger.error(ignore.getMessage());
         }
+        return 1 ;
     }
 
     private void computeSalesVolumeForstores(Collection<String> storeIds)  {
+
+        logger.info("Starting to sales volume for store {}", storeIds);
         for (String storeId : storeIds){
-            logger.info("Starting to sales volume for store {}", storeId);
-            Map<String, Long> quantitiesKeyedByProduct = sumVolumePerProduct(storeId);
-
+            Integer[] quantitiesByProduct  = sumVolumePerProduct(storeId);
+            int index  ;
             try (BufferedWriter bw = getWriterForStoreId(storeId)){
-                String line ;
-                BufferedReader products = getReferenceReaderProductsForStoreId(storeId);
-                while (products.ready() && ( (line = products.readLine() ) != null)){
-                    String [] split = line.split(Config.DELIMITER) ;
-                    String productId = split[0];
-                    Double price = Double.parseDouble(split[1]) ;
-
-                    if (quantitiesKeyedByProduct.containsKey(productId)) {
-                        double ca = quantitiesKeyedByProduct.get(productId) * price;
+                index =1 ;
+                BufferedReader productsPrices = getReferenceReaderProductsForStoreId(storeId);
+                String productPrice  ;
+                while (productsPrices.ready() && ( (productPrice = productsPrices.readLine() ) != null) ){
+                    if (quantitiesByProduct[index] != null){
+                        double ca = Double.parseDouble(productPrice.split(Config.DELIMITER)[1]) * quantitiesByProduct[index];
                         String formatedCa = String.format(Locale.US, "%.2f", ca);
-                        bw.write(productId + FIELD_SEPARATOR +  quantitiesKeyedByProduct.get(productId) + FIELD_SEPARATOR + formatedCa);
+                        bw.write(index + FIELD_SEPARATOR +  quantitiesByProduct[index] + FIELD_SEPARATOR + formatedCa);
                         bw.newLine();
-                    }
+                        index ++ ;
+                    }else index ++ ;
                 }
             }catch (IOException e){
+                System.out.println(e.getMessage());
                 throw new RuntimeException(e) ;
             }
         }
@@ -79,19 +80,17 @@ public class ProductSalesVolumeCalculator {
         logger.info(Thread.currentThread().getName() + " : End computing Sales Volume  for each store");
     }
 
-    private Map<String, Long> sumVolumePerProduct(String storeId) {
-        Map<String, Long> quantitiesKeyedByProduct = new HashMap<>();
+    private Integer[] sumVolumePerProduct( String storeId){
+        Integer [] list = new Integer[initConfig.productNum + 10] ;
         BufferedReader br = getReaderForStoreId(storeId);
-
-        br.lines().forEach(l -> {
-            String[] split = l.split(Config.DELIMITER) ;
-            String productId = split[0];
-            String quantity = split[1];
-            long sum = quantitiesKeyedByProduct.getOrDefault(productId , 0L) + Long.parseLong(quantity) ;
-            quantitiesKeyedByProduct.put(productId, sum) ;
+        br.lines().forEach(line -> {
+            int productId = Integer.parseInt(line.split(Config.DELIMITER)[0]);
+            int qte = Integer.parseInt(line.split(Config.DELIMITER)[1]);
+            if (list [productId] != null ) list[productId] =  list[productId] + qte;
+            else list [productId] = qte ;
         });
+        return list;
 
-        return quantitiesKeyedByProduct;
     }
 
     private Collection<List<String>> partitionStoresFor(int nthreads) {

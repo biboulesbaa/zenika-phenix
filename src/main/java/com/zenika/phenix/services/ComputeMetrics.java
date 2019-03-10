@@ -27,15 +27,17 @@ public class ComputeMetrics {
         ServiceStoreTopN serviceStoreTopN = new ServiceStoreTopN(initConfig, storeRepository);
         serviceStoreTopN.calculatTopNByMagasin();
         logger.info("End calculating top " +  initConfig.topn + " By magazin " );
-        logger.info("Start calculating top " +  initConfig.topn + " By magazin of J-7 " );
-        ServiceStoreTopJ7 magasinTopNJM = new ServiceStoreTopJ7(initConfig) ;
-        magasinTopNJM.calculateMagsinTopNJM();
-        logger.info("End calculating top " + initConfig.topn + " By magazin of J-7 " );
 
         logger.info("Start calculating top " + initConfig.topn + " Global " );
         ServiceGlobalTopN globalTopN = new ServiceGlobalTopN(initConfig, storeRepository);
         globalTopN.calculatTopNGlobal();
         logger.info("End calculating top " + initConfig.topn + " Global " );
+
+        logger.info("Start calculating top " +  initConfig.topn + " By magazin of J-7 " );
+        ServiceStoreTopJ7 magasinTopNJM = new ServiceStoreTopJ7(initConfig, storeRepository) ;
+        magasinTopNJM.calculateMagsinTopNJM();
+        logger.info("End calculating top " + initConfig.topn + " By magazin of J-7 " );
+
         logger.info("Start calculating top " + initConfig.topn + " Global of J-7" );
         ServiceGlobalTopNJ7 globalTopNJM = new ServiceGlobalTopNJ7(initConfig) ;
         globalTopNJM.ColculateTopNJM();

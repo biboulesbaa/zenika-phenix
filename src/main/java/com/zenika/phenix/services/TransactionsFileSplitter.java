@@ -40,7 +40,6 @@ public class TransactionsFileSplitter {
     }
 
     public void splitByMagazinId() {
-
         String input = getTransactionInputPath();
         try (BufferedReader br = new BufferedReader(new FileReader(input))) {
             String line;
